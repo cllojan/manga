@@ -1,10 +1,18 @@
 import cheerio from "cheerio";
-
+function findTextAndReturnRemainder(target, variable) {
+  var chopFront = target.substring(
+    target.search(variable) + variable.length,
+    target.length
+  );
+  var result = chopFront.substring(0, chopFront.search(";"));
+  return result;
+}
 export default async (req, res) => {
   if (req.method === "GET") {
     try {
       const url = "https://lectormanga.com/view_uploads/473540";
-      const manga = [];
+
+      const listImage = [];
       const response = await fetch(url, {
         headers: {
           accept:
@@ -28,19 +36,27 @@ export default async (req, res) => {
         method: "GET",
       });
       const data = await response.text();
-      console.log(data);
-      const $ = cheerio.load(data);
-      $("div .col-6 .card").each((item, el) => {
-        const title = $(el).find("a").text().trim();
-        const href = $(el).find("a").attr("href");
-        const img = $(el).find("img").attr("src");
-        const type = $(el).find("span.float-right").text().trim();
-        const txt = href.replace(/\//g, "-");
 
-        manga.push({ title, href: txt, img, type });
-      });
+      const $ = cheerio.load(data);      
+      var text = $($("script")).text();
+      let baseUrlImage = findTextAndReturnRemainder(
+        text,
+        "var dirPath ="
+      ).replace(/['' ]/g, "");
+      var findCode = findTextAndReturnRemainder(
+        text,
+        "var images = JSON.parse"
+      );
+      console.log(baseUrlImage);
+      listImage.push(
+        JSON.parse(findCode.replace(/[()'']/g, "")).reduce(
+          (a, v, i) => ({ ...a, [i + 1]: baseUrlImage.concat("", v) }),
+          {}
+        )
+      );
+
       res.statusCode = 200;
-      res.json(manga);
+      res.json(listImage);
     } catch (e) {
       res.statusCode = 404;
       return res.json({
