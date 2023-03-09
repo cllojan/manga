@@ -23,11 +23,12 @@ export default async (req, res) => {
           "sec-ch-ua-mobile": "?0",
           "sec-ch-ua-platform": '"Windows"',
           "sec-fetch-dest": "document",
+
           "sec-fetch-mode": "navigate",
           "sec-fetch-site": "cross-site",
           "sec-fetch-user": "?1",
           "upgrade-insecure-requests": "1",
-          cookie: "__qca=P0-2047510478-1677103364751",
+
           Referer:
             "https://lectormanga.com/library/manga/48026/isekai-ntr-shinyuu-no-onna-wo-saikyou-skill-de-otosu-houhou",
           "Referrer-Policy": "no-referrer-when-downgrade",
@@ -37,17 +38,22 @@ export default async (req, res) => {
       });
       const data = await response.text();
 
-      const $ = cheerio.load(data);      
+      const $ = cheerio.load(data);
       var text = $($("script")).text();
+
+      let urlImage = $("#viewer_image").attr("data-src");
+      let as = urlImage.split("/").slice(0, -1).join("/");
+      console.log(as);
       let baseUrlImage = findTextAndReturnRemainder(
         text,
         "var dirPath ="
       ).replace(/['' ]/g, "");
+
       var findCode = findTextAndReturnRemainder(
         text,
         "var images = JSON.parse"
       );
-      console.log(baseUrlImage);
+
       listImage.push(
         JSON.parse(findCode.replace(/[()'']/g, "")).reduce(
           (a, v, i) => ({ ...a, [i + 1]: baseUrlImage.concat("", v) }),
